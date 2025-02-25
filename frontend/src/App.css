@@ -60,7 +60,7 @@ label {
   font-weight: bold;
 }
 
-button {
+/* button {
   padding: 15px;
   border-radius: 10px;
   margin: 15px;
@@ -68,6 +68,28 @@ button {
   color: white;
   cursor: pointer;
   background-color: darkblue;
+  width: 40%;
+  font-size: 16px;
+} */
+#reset {
+  background-color: #f44336;
+  padding: 15px;
+  border-radius: 10px;
+  margin: 15px;
+  border: none;
+  color: white;
+  cursor: pointer;
+  width: 40%;
+  font-size: 16px;
+}
+#submit {
+  background-color: #4CAF50;
+  padding: 15px;
+  border-radius: 10px;
+  margin: 15px;
+  border: none;
+  color: white;
+  cursor: pointer;
   width: 40%;
   font-size: 16px;
 }

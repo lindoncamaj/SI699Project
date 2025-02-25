@@ -120,10 +120,10 @@ function Form() {
               </option>
             ))}
           </select>
-          <button type="reset" value="reset" onClick={() => handleReset()}>
+          <button id="reset" type="reset" value="reset" onClick={() => handleReset()}>
             Reset
           </button>
-          <button type="submit" value="Submit" onClick={(e) => handleSubmit(e)}>
+          <button id="submit" type="submit" value="Submit" onClick={(e) => handleSubmit(e)}>
             Submit
           </button>
         </form>
