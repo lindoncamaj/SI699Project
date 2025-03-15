@@ -32,14 +32,21 @@ function Form() {
     console.log(minPrice, maxPrice, location, carMake, carType);
 
     // Validation check: Ensure all fields are filled
-  if (!minPrice || !maxPrice || !location || !carMake || !Object.values(carType).includes(true)) {
-    alert("Please fill out all fields before submitting.");
-    return;
-  }
+    if (!minPrice || !maxPrice || !location || !carMake || !Object.values(carType).includes(true)) {
+      alert("Please fill out all fields before submitting.");
+      return;
+    }
+
+    const data = {
+      minPrice,
+      maxPrice,
+      location,
+      carType,
+      carMake
+    };
+
     // Navigate to Recs page and pass form data
-    navigate("/recs", {
-      state: { minPrice, maxPrice, location, carMake, carType },
-    });
+    axios.post("http://localhost:8080/recommend", data).then((response) => {navigate("/recs", {state: response.data})});
   };
 
   const handleCarTypeChange = (sub) => {
