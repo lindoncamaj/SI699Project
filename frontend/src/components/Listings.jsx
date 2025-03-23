@@ -1,25 +1,52 @@
 import { useLocation } from "react-router-dom";
+import { Card, CardContent, CardActions, CardMedia, Typography, Button, Container, Grid } from "@mui/material";
+import { useState, useEffect } from "react";
 
 const Listings = () => {
     const location = useLocation();
     const listingsData = location.state || {};
+    const [thumbnails, setThumbnails] = useState({});
 
+
+    if (!listingsData.length) {
+        return <h1 className="text-center text-xl font-bold mt-6">No Listings Found</h1>;
+    }
+
+        
     return (
-        <div>
-            <h1>Listings</h1>
-            <ul>
-                <li><a href={listingsData[0].vdp_url}>{listingsData[0].heading}</a></li>
-                <li><a href={listingsData[1].vdp_url}>{listingsData[1].heading}</a></li>
-                <li><a href={listingsData[2].vdp_url}>{listingsData[2].heading}</a></li>
-                <li><a href={listingsData[3].vdp_url}>{listingsData[3].heading}</a></li>
-                <li><a href={listingsData[4].vdp_url}>{listingsData[4].heading}</a></li>
-                <li><a href={listingsData[5].vdp_url}>{listingsData[5].heading}</a></li>
-                <li><a href={listingsData[6].vdp_url}>{listingsData[6].heading}</a></li>
-                <li><a href={listingsData[7].vdp_url}>{listingsData[7].heading}</a></li>
-                <li><a href={listingsData[8].vdp_url}>{listingsData[8].heading}</a></li>
-                <li><a href={listingsData[9].vdp_url}>{listingsData[9].heading}</a></li>
-            </ul>
-        </div>
+        <Container>
+            <h1 className="text-2xl font-bold text-center mb-6">Listings</h1>
+            <Grid container spacing={3}>
+                {listingsData.map((listing, index) => (
+                    <Grid item xs={12} sm={6} md={4} key={index}>
+                        <Card className="shadow-md">
+                            <CardMedia
+                                component="img"
+                                height="140"
+                                image={listing.image_url || "https://static.vecteezy.com/system/resources/thumbnails/002/083/833/small/red-car-illustration-free-vector.jpg"} // Placeholder if no image
+                                alt={listing.heading}
+                            />
+                            <CardContent>
+                                <Typography variant="h6" component="div">
+                                    {listing.heading}
+                                </Typography>
+                            </CardContent>
+                            <CardActions>
+                                <Button 
+                                    variant="contained" 
+                                    color="primary" 
+                                    href={listing.vdp_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                >
+                                    View Details
+                                </Button>
+                            </CardActions>
+                        </Card>
+                    </Grid>
+                ))}
+            </Grid>
+        </Container>
     );
 };
 

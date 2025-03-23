@@ -1,6 +1,7 @@
-import { useLocation } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { Card, CardContent, CardActions, CardMedia, Typography, Button, Container, Grid } from "@mui/material";
+// import Grid from '@mui/material/Grid2';
 
 const Recs = () => {
   const location = useLocation();
@@ -19,60 +20,41 @@ const Recs = () => {
 
 
   return (
-    <div>
-      <h1>Recommendations</h1>
-      <ul>
-        <li><a href="#" onClick={(e) => {
-          e.preventDefault();
-          handleLinkClick(formData.item1.make, formData.item1.model, formData.item1.year);
-        }}>{formData.item1.year} {formData.item1.make} {formData.item1.model}</a></li>
+    <Container>
+      <Typography variant="h4" align="center" gutterBottom>
+        Recommendations
+      </Typography>
+      <Grid container spacing={3}>
+        {Object.keys(formData).map((key) => (
+          <Grid item xs={12} sm={6} md={4} key={key}>
+            <Card>
+              <CardMedia
+                component="img"
+                height="140"
+                image="https://static.vecteezy.com/system/resources/thumbnails/002/083/833/small/red-car-illustration-free-vector.jpg" // Placeholder image
+                alt={`${formData[key].make} ${formData[key].model}`}
+              />
+              <CardContent>
+                <Typography variant="h6">
+                  {formData[key].year} {formData[key].make} {formData[key].model}
+                </Typography>
+              </CardContent>
+              <CardActions>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => handleLinkClick(formData[key].make, formData[key].model, formData[key].year)}
+                >
+                  View Details
+                </Button>
+              </CardActions>
+            </Card>
+          </Grid>
+        ))}
+      </Grid>
+    </Container>
 
-        <li><a href="#" onClick={(e) => {
-          e.preventDefault();
-          handleLinkClick(formData.item2.make, formData.item2.model, formData.item2.year);
-        }}>{formData.item2.year} {formData.item2.make} {formData.item2.model}</a></li>
-
-        <li><a href="#" onClick={(e) => {
-          e.preventDefault();
-          handleLinkClick(formData.item3.make, formData.item3.model, formData.item3.year);
-        }}>{formData.item3.year} {formData.item3.make} {formData.item3.model}</a></li>
-
-        <li><a href="#" onClick={(e) => {
-          e.preventDefault();
-          handleLinkClick(formData.item4.make, formData.item4.model, formData.item4.year);
-        }}>{formData.item4.year} {formData.item4.make} {formData.item4.model}</a></li>
-
-        <li><a href="#" onClick={(e) => {
-          e.preventDefault();
-          handleLinkClick(formData.item5.make, formData.item5.model, formData.item5.year);
-        }}>{formData.item5.year} {formData.item5.make} {formData.item5.model}</a></li>
-
-        <li><a href="#" onClick={(e) => {
-          e.preventDefault();
-          handleLinkClick(formData.item6.make, formData.item6.model, formData.item6.year);
-        }}>{formData.item6.year} {formData.item6.make} {formData.item6.model}</a></li>
-
-        <li><a href="#" onClick={(e) => {
-          e.preventDefault();
-          handleLinkClick(formData.item7.make, formData.item7.model, formData.item7.year);
-        }}>{formData.item7.year} {formData.item7.make} {formData.item7.model}</a></li>
-
-        <li><a href="#" onClick={(e) => {
-          e.preventDefault();
-          handleLinkClick(formData.item8.make, formData.item8.model, formData.item8.year);
-        }}>{formData.item8.year} {formData.item8.make} {formData.item8.model}</a></li>
-
-        <li><a href="#" onClick={(e) => {
-          e.preventDefault();
-          handleLinkClick(formData.item9.make, formData.item9.model, formData.item9.year);
-        }}>{formData.item9.year} {formData.item9.make} {formData.item9.model}</a></li>
-
-        <li><a href="#" onClick={(e) => {
-          e.preventDefault();
-          handleLinkClick(formData.item10.make, formData.item10.model, formData.item10.year);
-        }}>{formData.item10.year} {formData.item10.make} {formData.item10.model}</a></li>
-      </ul>
-    </div>
+    
   );
 };
 
