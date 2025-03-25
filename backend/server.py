@@ -34,16 +34,24 @@ class Car_Trim(db.Model):
     trim_name = db.Column(db.String(100), nullable=False)
     # trim_description = db.Column(db.String(255))
 
+class Car_Image(db.Model):
+    __tablename__ = "Car_Image"
+    image_id = db.Column(db.Integer, primary_key=True)
+    image_url = db.Column(db.String(255), nullable=False)
+
 class Car(db.Model):
     __tablename__ = "Car"
     car_id = db.Column(db.Integer, primary_key=True)
-    model_id = db.Column(db.Integer, db.ForeignKey('Car_Model.model_id'))
+    model_id = db.Column(db.Integer, db.ForeignKey('Car_Model.model_id'), nullable=False)
     make_id = db.Column(db.Integer, db.ForeignKey('Car_Make.make_id'), nullable=False)
-    trim_id = db.Column(db.Integer, db.ForeignKey("Car_Trim.trim_id"))
-    car_year = db.Column(db.Integer)
-    car_msrp = db.Column(db.DECIMAL(10, 2))
+    trim_id = db.Column(db.Integer, db.ForeignKey("Car_Trim.trim_id"), nullable=False)
+    image_id = db.Column(db.Integer, db.ForeignKey("Car_Image.image_id"), nullable=False)
+    car_year = db.Column(db.Integer, nullable=False)
+    car_msrp = db.Column(db.DECIMAL(10, 2), nullable=False)
     car_min_price = db.Column(db.DECIMAL(10, 2))
     car_med_price = db.Column(db.DECIMAL(10, 2))
+    car_expert_score = db.Column(db.DECIMAL(10, 2))
+    car_consumer_score = db.Column(db.DECIMAL(10, 2))
 
 @app.route("/recommend", methods=['POST'])
 def recommend_cars():
@@ -62,8 +70,9 @@ def recommend_cars():
     for i in range(10):
         make = db.session.execute(db.select(Car_Make).where(Car_Make.make_id == m[i].make_id)).scalar()
         model = db.session.execute(db.select(Car_Model).where(Car_Model.model_id == m[i].model_id)).scalar()
+        image = db.session.execute(db.select(Car_Image).where(Car_Image.image_id == m[i].image_id)).scalar()
 
-        n["item"+str(i + 1)] = {"year": m[i].car_year, "make": make.make_name, "model": model.model_name}
+        n["item"+str(i + 1)] = {"year": m[i].car_year, "make": make.make_name, "model": model.model_name, "image": image.image_url}
 
     return n
 
