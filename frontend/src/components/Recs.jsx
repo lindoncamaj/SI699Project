@@ -31,7 +31,7 @@ const Recs = () => {
               <CardMedia
                 component="img"
                 height="140"
-                image="https://static.vecteezy.com/system/resources/thumbnails/002/083/833/small/red-car-illustration-free-vector.jpg" // Placeholder image
+                image={formData[key].image}// Placeholder image
                 alt={`${formData[key].make} ${formData[key].model}`}
               />
               <CardContent>
@@ -53,8 +53,6 @@ const Recs = () => {
         ))}
       </Grid>
     </Container>
-
-    
   );
 };
 
