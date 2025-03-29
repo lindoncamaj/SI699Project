@@ -13,6 +13,8 @@ function Form() {
   });
   const [carMake, setCarMake] = useState([]);
   const [makes, setMakes] = useState([]);
+  const [minMPG, setMinMPG] = useState([]);
+  const [electric, setElectric] = useState([]);
 
   const navigate = useNavigate(); // Initialize navigation
 
@@ -29,10 +31,10 @@ function Form() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(minPrice, maxPrice, location, carMake, carType);
+    console.log(minPrice, maxPrice, location, carMake, carType, minMPG, electric);
 
     // Validation check: Ensure all fields are filled
-    if (!minPrice || !maxPrice || !location || !carMake || !Object.values(carType).includes(true)) {
+    if (!minPrice || !maxPrice || !location || !carMake || !electric || !Object.values(carType).includes(true) || !Object.values(electric).includes(true)) {
       alert("Please fill out all fields before submitting.");
       return;
     }
@@ -42,7 +44,8 @@ function Form() {
       maxPrice,
       location,
       carType,
-      carMake
+      carMake,
+      minMPG
     };
 
     // Navigate to Recs page and pass form data
@@ -51,6 +54,12 @@ function Form() {
 
   const handleCarTypeChange = (sub) => {
     setCarType((prev) => ({
+      ...prev,
+      [sub]: !prev[sub],
+    }));
+  };
+  const handleElectric = (sub) => {
+    setElectric((prev) => ({
       ...prev,
       [sub]: !prev[sub],
     }));
@@ -72,7 +81,7 @@ function Form() {
       <h1>Match My Car</h1>
       <fieldset>
         <form action="#" method="get">
-          <label htmlFor="minPrice">Minimum Price ($)</label>
+          <label htmlFor="minPrice">Minimum Price ($)*</label>
           <input
             type="number"
             name="minPrice"
@@ -82,7 +91,7 @@ function Form() {
             placeholder="Enter min price"
             required
           />
-          <label htmlFor="maxPrice">Maximum Price ($)</label>
+          <label htmlFor="maxPrice">Maximum Price ($)*</label>
           <input
             type="number"
             name="maxPrice"
@@ -102,7 +111,7 @@ function Form() {
             placeholder="Enter City or Zip Code"
             required
           />
-          <label htmlFor="carType">Car Type</label>
+          <label htmlFor="carType">Car Type*</label>
           <input
             type="checkbox"
             name="carType"
@@ -127,7 +136,7 @@ function Form() {
             onChange={(e) => handleCarTypeChange("truck")}
           />
           Truck
-          <label>Car Make</label>
+          <label>Car Make*</label>
           <select
             name="select"
             id="select"
@@ -144,6 +153,41 @@ function Form() {
               </option>
             ))}
           </select>
+          {/* <label htmlFor="electric">Electric?*</label> */}
+          <input
+            type="checkbox"
+            name="electric"
+            id="elec"
+            checked={electric.elec === true}
+            onChange={(e) => handleElectric("elec")}
+          />
+          Electric
+          <input
+            type="checkbox"
+            name="electric"
+            id="ice"
+            checked={electric.ice === true}
+            onChange={(e) => handleElectric("ice")}
+          />
+          ICE (Non-Electric)
+          <input
+            type="checkbox"
+            name="electric"
+            id="hybrid"
+            checked={electric.hybrid === true}
+            onChange={(e) => handleElectric("hybrid")}
+          />
+          Hybrid
+          <label htmlFor="location">Fuel Economy (Optional)</label>
+          <input
+            type="text"
+            name="minMPG"
+            id="minMPG"
+            value={minMPG}
+            onChange={(e) => setMinMPG(e.target.value)}
+            placeholder="Minimum MPG (Enter a number)"
+            required
+          />
           <button
             id="reset"
             type="reset"
