@@ -2,12 +2,6 @@ import pymysql
 import pandas as pd
 import numpy as np
 
-# def init_db_construct():
-#     conn = pymysql.connect('match-my-car.cj2q0agii4v1.us-east-1.rds.amazonaws.com', user='admin',
-#                            passwd='si699matchmycar', connect_timeout=10)
-#     with conn.cursor() as cur:
-#         cur.execute('create database car_db;')
-
 def init_db(cur):
     cur.execute("DROP DATABASE IF EXISTS car_database;")
     cur.execute("CREATE DATABASE IF NOT EXISTS car_database;")
@@ -29,19 +23,28 @@ def create_tables(cur):
             trim_name VARCHAR(100) NOT NULL UNIQUE
         );""",# trim_description VARCHAR(255)
 
+        """CREATE TABLE IF NOT EXISTS Car_Image (
+            image_id INT PRIMARY KEY AUTO_INCREMENT,
+            image_url VARCHAR(255) NOT NULL UNIQUE
+        );""",
+
         """CREATE TABLE IF NOT EXISTS Car (
             car_id INT PRIMARY KEY AUTO_INCREMENT,
             make_id INT NOT NULL,
             model_id INT NOT NULL,
             trim_id INT NOT NULL,
+            image_id INT NOT NULL,
             car_year INT NOT NULL,
             car_msrp DECIMAL(10,2) NOT NULL,
-            car_min_price DECIMAL(10, 2),
+            car_min_price DECIMAL(10,2),
             car_med_price DECIMAL(10,2),
+            car_expert_score DECIMAL(10,2),
+            car_consumer_score DECIMAL(10,2),
 
             FOREIGN KEY (make_id) REFERENCES Car_Make(make_id) ON DELETE CASCADE,
             FOREIGN KEY (model_id) REFERENCES Car_Model(model_id) ON DELETE CASCADE,
-            FOREIGN KEY (trim_id) REFERENCES Car_Trim(trim_id) ON DELETE CASCADE
+            FOREIGN KEY (trim_id) REFERENCES Car_Trim(trim_id) ON DELETE CASCADE,
+            FOREIGN KEY (image_id) REFERENCES Car_Image(image_id) ON DELETE CASCADE
         );""",
 
         """CREATE TABLE IF NOT EXISTS Fuel_Economy (
@@ -81,9 +84,10 @@ def insert_data(cur, car_data):
     make_insert_query = """INSERT INTO Car_Make (make_id, make_name) VALUES (%s, %s);"""
     model_insert_query = """INSERT INTO Car_Model (model_id, model_name) VALUES (%s, %s);"""
     trim_insert_query = """INSERT INTO Car_Trim (trim_id, trim_name) VALUES (%s, %s);"""
+    image_insert_query = """INSERT INTO Car_Image (image_id, image_url) VALUES (%s, %s);"""
     car_insert_query = """
-        INSERT INTO Car (make_id, model_id, trim_id, car_year, car_msrp, car_min_price, car_med_price)
-        VALUES (%s, %s, %s, %s, %s, %s, %s);
+        INSERT INTO Car (make_id, model_id, trim_id, image_id, car_year, car_msrp, car_min_price, car_med_price, car_expert_score, car_consumer_score)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
     """
 
     for _, row in car_data.iterrows():
@@ -103,7 +107,12 @@ def insert_data(cur, car_data):
             pass
 
         try:
-            cursor.execute(car_insert_query, (row["make_id"], row["model_id"], row["trim_id"], row["year"], row["trim_msrp"], row["min_price"], row["median_price"]))
+            cursor.execute(image_insert_query, (row["image_id"], row["image"]))
+        except:
+            pass
+
+        try:
+            cursor.execute(car_insert_query, (row["make_id"], row["model_id"], row["trim_id"], row["image_id"], row["year"], row["trim_msrp"], row["min_price"], row["median_price"], row["expert_score"], row["consumer_score"]))
         except Exception as e:
             print(e)
             print(f"make id: {row['make_id']}")
@@ -162,18 +171,15 @@ if __name__ == "__main__":
 
     cursor = connection.cursor()
 
-    # create db if not exists and use db
     # init_db(cursor)
     cursor.execute("USE car_database;")
 
-    # create tables if it doesn't exist and commit the changes
     # create_tables(cursor)
     # connection.commit()
     # print("Tables have been created")
 
-    # insert data into tables
-    # car_data = pd.read_csv("updated_car_info_and_safety_ratings2.csv")
-    # print(car_data.make.unique())
+
+    # car_data = pd.read_csv("combined.csv")
     # car_data = car_data.replace({np.nan: None})
     # insert_data(cursor, car_data)
     # connection.commit()
