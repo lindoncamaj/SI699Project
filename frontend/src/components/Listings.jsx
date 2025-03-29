@@ -1,11 +1,10 @@
 import { useLocation } from "react-router-dom";
 import { Card, CardContent, CardActions, CardMedia, Typography, Button, Container, Grid } from "@mui/material";
-import { useState, useEffect } from "react";
+// import { useState, useEffect } from "react";
 
 const Listings = () => {
     const location = useLocation();
     const listingsData = location.state || {};
-    const [thumbnails, setThumbnails] = useState({});
 
 
     if (!listingsData.length) {
