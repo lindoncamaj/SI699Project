@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
+import Select from 'react-select'
 
 function Form() {
   const [minPrice, setMinPrice] = useState("");
@@ -12,29 +13,86 @@ function Form() {
     truck: false,
   });
   const [carMake, setCarMake] = useState([]);
-  const [makes, setMakes] = useState([]);
-  const [minMPG, setMinMPG] = useState([]);
-  const [electric, setElectric] = useState([]);
+  const makes = [
+    { value: '1', label: 'Acura' },
+    { value: '2', label: 'Audi' },
+    { value: '3', label: 'BMW' },
+    { value: '4', label: 'Buick' },
+    { value: '5', label: 'Cadillac' },
+    { value: '6', label: 'Chevrolet' },
+    { value: '7', label: 'Chrysler' },
+    { value: '8', label: 'Dodge' },
+    { value: '9', label: 'Ford' },
+    { value: '10', label: 'Genesis' },
+    { value: '11', label: 'GMC' },
+    { value: '12', label: 'Honda' },
+    { value: '13', label: 'Hyundai' },
+    { value: '14', label: 'Infiniti' },
+    { value: '15', label: 'Jeep' },
+    { value: '16', label: 'Kia' },
+    { value: '17', label: 'Lincoln' },
+    { value: '18', label: 'Mazda' },
+    { value: '19', label: 'Mercedes-Benz' },
+    { value: '20', label: 'Mitsubishi' },
+    { value: '21', label: 'Nissan' },
+    { value: '22', label: 'Subaru' },
+    { value: '23', label: 'Tesla' },
+    { value: '24', label: 'Toyota' },
+    { value: '25', label: 'Volkswagen' },
+    { value: '26', label: 'Volvo' },
+  ]
+  const [minMPG, setMinMPG] = useState(0);
+  const [electric, setElectric] = useState({
+    elec: false,
+    gas: false,
+    hybrid: false,
+  });
 
   const navigate = useNavigate(); // Initialize navigation
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    axios
-      .get("http://localhost:8080/api/makes")
-      .then((response) => {
-        setMakes(response.data.data || []); // Store the "data" array from API response
-      })
-      .catch((err) => {
-        console.error("API Error:", err);
-      });
+    const checkSession = async () => {
+        try {
+            const response = await axios.get('http://localhost:8080/session', { withCredentials: true });
+            if (response.data.logged_in) {
+                setUser(response.data.user_id); // Set user ID or any user info you need
+            }
+        } catch (err) {
+            setError(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    checkSession();
   }, []);
+
+  const handleLogin = () => {
+    navigate("/login"); // Redirect to the login page
+  };
+
+  const handleLogout = async () => {
+    try {
+        await axios.post('http://localhost:8080/logout', {}, { withCredentials: true });
+        setUser(null); // Clear user state
+    } catch (err) {
+        setError(err);
+    }
+  };
+
+
+
+
 
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log(minPrice, maxPrice, location, carMake, carType, minMPG, electric);
 
     // Validation check: Ensure all fields are filled
-    if (!minPrice || !maxPrice || !location || !carMake || !electric || !Object.values(carType).includes(true) || !Object.values(electric).includes(true)) {
+    if (!minPrice || !maxPrice || !location || !carMake || !Object.values(carType).includes(true) || !Object.values(electric).includes(true)) {
       alert("Please fill out all fields before submitting.");
       return;
     }
@@ -45,11 +103,12 @@ function Form() {
       location,
       carType,
       carMake,
+      electric,
       minMPG
     };
 
     // Navigate to Recs page and pass form data
-    axios.post("http://localhost:8080/recommend", data).then((response) => {navigate("/recs", {state: response.data})});
+    axios.post("http://localhost:8080/recommend", data, { withCredentials: true }).then((response) => {navigate("/recs", {state: response.data})});
   };
 
   const handleCarTypeChange = (sub) => {
@@ -79,6 +138,10 @@ function Form() {
   return (
     <div className="Form">
       <h1>Match My Car</h1>
+      <button onClick={user ? handleLogout : handleLogin}>
+        {user ? "Logout" : "Login"}
+      </button>
+
       <fieldset>
         <form action="#" method="get">
           <label htmlFor="minPrice">Minimum Price ($)*</label>
@@ -111,6 +174,8 @@ function Form() {
             placeholder="Enter City or Zip Code"
             required
           />
+
+          {/* CAR TYPE CHECKBOX */}
           <label htmlFor="carType">Car Type*</label>
           <input
             type="checkbox"
@@ -136,24 +201,20 @@ function Form() {
             onChange={(e) => handleCarTypeChange("truck")}
           />
           Truck
+
+          {/* CAR MAKE DROPDOWN */}
           <label>Car Make*</label>
-          <select
+          <Select
             name="select"
             id="select"
+            isMulti
+            options={makes}
             value={carMake}
-            onChange={(e) => setCarMake(e.target.value)}
-          >
-            <option value="" disabled selected={carMake === ""}>
-              Select an Option
-            </option>
+            onChange={(e) => setCarMake(e)}
+          />
 
-            {makes.map((make) => (
-              <option key={make.id} value={make.name}>
-                {make.name}
-              </option>
-            ))}
-          </select>
-          {/* <label htmlFor="electric">Electric?*</label> */}
+          {/* ELECTRIC/GAS/HYBRID CHECKBOX */}
+          <label>Electric/Gas/Hybrid*</label>
           <input
             type="checkbox"
             name="electric"
@@ -165,11 +226,11 @@ function Form() {
           <input
             type="checkbox"
             name="electric"
-            id="ice"
-            checked={electric.ice === true}
-            onChange={(e) => handleElectric("ice")}
+            id="gas"
+            checked={electric.gas === true}
+            onChange={(e) => handleElectric("gas")}
           />
-          ICE (Non-Electric)
+          Traditional Gas
           <input
             type="checkbox"
             name="electric"
@@ -178,6 +239,8 @@ function Form() {
             onChange={(e) => handleElectric("hybrid")}
           />
           Hybrid
+
+          {/* MPG INPUT */}
           <label htmlFor="location">Fuel Economy (Optional)</label>
           <input
             type="text"
@@ -188,6 +251,8 @@ function Form() {
             placeholder="Minimum MPG (Enter a number)"
             required
           />
+
+          {/* RESET BUTTON */}
           <button
             id="reset"
             type="reset"
@@ -196,6 +261,8 @@ function Form() {
           >
             Reset
           </button>
+
+          {/* SUBMIT BUTTON */}
           <button
             id="submit"
             type="submit"
