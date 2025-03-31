@@ -2,11 +2,11 @@ import pymysql
 import pandas as pd
 import numpy as np
 
-def init_db(cur):
+def init_car_db(cur):
     cur.execute("DROP DATABASE IF EXISTS car_database;")
     cur.execute("CREATE DATABASE IF NOT EXISTS car_database;")
 
-def create_tables(cur):
+def create_car_tables(cur):
     table_queries = [
         """CREATE TABLE IF NOT EXISTS Car_Make (
             make_id INT PRIMARY KEY AUTO_INCREMENT,
@@ -74,13 +74,7 @@ def create_tables(cur):
     for query in table_queries:
         cur.execute(query)
 
-
-
-
-
-
-
-def insert_data(cur, car_data):
+def insert_car_data(cur, car_data):
     make_insert_query = """INSERT INTO Car_Make (make_id, make_name) VALUES (%s, %s);"""
     model_insert_query = """INSERT INTO Car_Model (model_id, model_name) VALUES (%s, %s);"""
     trim_insert_query = """INSERT INTO Car_Trim (trim_id, trim_name) VALUES (%s, %s);"""
@@ -153,9 +147,68 @@ def insert_data(cur, car_data):
 
 
 
+def init_user_db(cur):
+    """
+    """
+    cur.execute("DROP DATABASE IF EXISTS user_database;")
+    cur.execute("CREATE DATABASE IF NOT EXISTS user_database;")
 
+def create_user_tables(cur):
+    """
+    """
+    table_queries = [
+        """CREATE TABLE IF NOT EXISTS User (
+            user_id INT PRIMARY KEY AUTO_INCREMENT,
+            user_name VARCHAR(100) NOT NULL UNIQUE,
+            user_pass VARCHAR(255) NOT NULL,
+            user_email VARCHAR(100) NOT NULL UNIQUE,
+            user_fname VARCHAR(100) NOT NULL,
+            user_lname VARCHAR(100) NOT NULL,
+            user_date_created DATETIME DEFAULT (NOW())
+        );""",
 
+        """CREATE TABLE IF NOT EXISTS User_Query (
+            query_id INT PRIMARY KEY AUTO_INCREMENT,
+            user_id INT NOT NULL,
+            query_min_price INT NOT NULL,
+            query_max_price INT NOT NULL,
+            query_location INT NOT NULL,
+            query_car_type_sedan BOOLEAN NOT NULL,
+            query_car_type_suv BOOLEAN NOT NULL,
+            query_car_type_truck BOOLEAN NOT NULL,
+            query_car_make VARCHAR(128) NOT NULL,
+            query_car_elec BOOLEAN NOT NULL,
+            query_car_gas BOOLEAN NOT NULL,
+            query_car_hybrid BOOLEAN NOT NULL,
+            query_car_mpg INT,
 
+            FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE
+        );""",
+
+        """CREATE TABLE IF NOT EXISTS User_Selection (
+            selection_id INT PRIMARY KEY AUTO_INCREMENT,
+            user_id INT NOT NULL,
+            query_id INT NOT NULL,
+            selection_rank INT NOT NULL,
+            selection_time DATETIME DEFAULT NOW(),
+
+            FOREIGN KEY (user_id) REFERENCES User(user_id) ON DELETE CASCADE,
+            FOREIGN KEY (query_id) REFERENCES User_Query(query_id) ON DELETE CASCADE
+        );"""
+    ]
+
+    for query in table_queries:
+        cur.execute(query)
+
+def insert_user_data(cur, user_data):
+    """
+    """
+    user_insert_query = """INSERT INTO User (user_name, user_pass, user_email, user_fname, user_lname) VALUES (%s, %s, %s, %s, %s);"""
+
+    try:
+        cursor.execute(user_insert_query, (row["name"], row["pass"], row["email"], row["fname"], row["lname"]))
+    except:
+        pass
 
 
 
@@ -168,24 +221,38 @@ if __name__ == "__main__":
             password = "si699matchmycar",
             port = 3306
             )
-
     cursor = connection.cursor()
 
-    # init_db(cursor)
-    cursor.execute("USE car_database;")
 
-    # create_tables(cursor)
+
+    # init_car_db(cursor)
+    # cursor.execute("USE car_database;")
+    # create_car_tables(cursor)
     # connection.commit()
     # print("Tables have been created")
 
+    # init_user_db(cursor)
+    cursor.execute("USE user_database;")
+    # create_user_tables(cursor)
+    # connection.commit()
+    # print("Tables have been created")
 
     # car_data = pd.read_csv("combined.csv")
     # car_data = car_data.replace({np.nan: None})
-    # insert_data(cursor, car_data)
+    # insert_car_data(cursor, car_data)
     # connection.commit()
     # print("Data Inserted")
 
-    cursor.execute("SELECT * FROM Car;")
+    # user_data = {"name": "lindonc", "pass": "test", "email": "lindonc@test.com", "fname": "Lindon", "lname": "Camaj"}
+    # insert_user_data(cursor, user_data)
+    # connection.commit()
+    # print("Data Inserted")
+
+    # cursor.execute("SELECT * FROM Car;")
+    # data = cursor.fetchall()
+    # print(data)
+
+    cursor.execute("SELECT * FROM User_Selection;")
     data = cursor.fetchall()
     print(data)
 
