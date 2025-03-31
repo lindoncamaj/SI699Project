@@ -1,45 +1,54 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, session, redirect, render_template
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 import requests
 from rec_system import recommend
 from marketcheck import check
+import random
 
 app = Flask(__name__, static_folder='frontend/dist', static_url_path='/')
-cors = CORS(app, origins='*')
-
-CAR_API = "https://carapi.app/api/makes"
+cors = CORS(app, origins='*', supports_credentials=True)
 
 user = "admin"
 pin = "si699matchmycar"
 host = "database2.cyjek8guse5h.us-east-1.rds.amazonaws.com"
 db_name = "car_database"
+db2_name = "user_database"
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql+pymysql://{user}:{pin}@{host}/{db_name}"
+app.config['SQLALCHEMY_BINDS'] = {
+    'car_data': f"mysql+pymysql://{user}:{pin}@{host}/{db_name}",
+    'user_data': f"mysql+pymysql://{user}:{pin}@{host}/{db2_name}"
+}
+app.config["SECRET_KEY"] = 'your_unique_secret_key'
 db = SQLAlchemy(app)
 
 class Car_Make(db.Model):
+    __bind_key__ = 'car_data'
     __tablename__ = "Car_Make"
     make_id = db.Column(db.Integer, primary_key=True)
     make_name = db.Column(db.String(50), nullable=False)
 
 class Car_Model(db.Model):
+    __bind_key__ = 'car_data'
     __tablename__ = 'Car_Model'
     model_id = db.Column(db.Integer, primary_key=True)
     model_name = db.Column(db.String(50), nullable=False)
 
 class Car_Trim(db.Model):
+    __bind_key__ = 'car_data'
     __tablename__ = 'Car_Trim'
     trim_id = db.Column(db.Integer, primary_key=True)
     trim_name = db.Column(db.String(100), nullable=False)
     # trim_description = db.Column(db.String(255))
 
 class Car_Image(db.Model):
+    __bind_key__ = 'car_data'
     __tablename__ = "Car_Image"
     image_id = db.Column(db.Integer, primary_key=True)
     image_url = db.Column(db.String(255), nullable=False)
 
 class Car(db.Model):
+    __bind_key__ = 'car_data'
     __tablename__ = "Car"
     car_id = db.Column(db.Integer, primary_key=True)
     model_id = db.Column(db.Integer, db.ForeignKey('Car_Model.model_id'), nullable=False)
@@ -53,6 +62,44 @@ class Car(db.Model):
     car_expert_score = db.Column(db.DECIMAL(10, 2))
     car_consumer_score = db.Column(db.DECIMAL(10, 2))
 
+class User(db.Model):
+    __bind_key__ = 'user_data'
+    __tablename__ = "User"
+    user_id = db.Column(db.Integer, primary_key=True)
+    user_name = db.Column(db.String(100), unique=True, nullable=False)
+    user_pass = db.Column(db.String(256), nullable=False)
+    user_email = db.Column(db.String(), unique=True, nullable=False)
+    user_fname = db.Column(db.String(100), nullable=False)
+    user_lname = db.Column(db.String(100), nullable=False)
+    user_date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+class User_Query(db.Model):
+    __bind_key__ = 'user_data'
+    __tablename__ = "User_Query"
+    query_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('User.user_id'), nullable=False)
+    query_min_price = db.Column(db.Integer, nullable=False)
+    query_max_price = db.Column(db.Integer, nullable=False)
+    query_location = db.Column(db.Integer, nullable=False)
+    query_car_type_sedan = db.Column(db.Boolean, nullable=False)
+    query_car_type_suv = db.Column(db.Boolean, nullable=False)
+    query_car_type_truck = db.Column(db.Boolean, nullable=False)
+    query_car_make = db.Column(db.String(128), nullable=False)
+    query_car_elec = db.Column(db.Boolean, nullable=False)
+    query_car_gas = db.Column(db.Boolean, nullable=False)
+    query_car_hybrid = db.Column(db.Boolean, nullable=False)
+    query_car_mpg = db.Column(db.Integer)
+
+class User_Selection(db.Model):
+    __bind_key__ = 'user_data'
+    __tablename__ = "User_Selection"
+    selection_id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('User.user_id'), nullable=False)
+    query_id = db.Column(db.Integer, db.ForeignKey('User_Query.query_id'), nullable=False)
+    selection_rank = db.Column(db.Integer, nullable=False)
+    selection_time = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+
 @app.route("/recommend", methods=['POST'])
 def recommend_cars():
     data = request.get_json()
@@ -61,18 +108,55 @@ def recommend_cars():
     max_price = data.get("maxPrice")
     location = data.get("location")
     c_type = data.get("carType")
-    c_make = data.get("carMake")
+    sedan = c_type["sedan"]
+    suv = c_type["suv"]
+    truck = c_type["truck"]
+    c_make = [int(car["value"]) for car in data.get("carMake")]
+    elec = data.get("electric")["elec"]
+    gas = data.get("electric")["gas"]
+    hybrid = data.get("electric")["hybrid"]
+    minMPG = data.get("minMPG")
 
-    result = recommend(min_price, max_price, location, c_type, c_make)
-    m = db.session.execute(db.select(Car).where(Car.car_id.in_(result))).scalars().all()
+    if "user_id" in session:
+        new_query = User_Query(
+            user_id=session["user_id"],
+            query_min_price = min_price,
+            query_max_price = max_price,
+            query_location = location,
+            query_car_type_sedan = sedan,
+            query_car_type_suv = suv,
+            query_car_type_truck = truck,
+            query_car_make  = str(c_make),
+            query_car_elec = elec,
+            query_car_gas = gas,
+            query_car_hybrid = hybrid,
+            query_car_mpg = minMPG
+        )
+        db.session.add(new_query)
+        db.session.commit()
+        query_id = new_query.query_id
+        print(query_id)
+    else:
+        print("no user in session")
+        query_id = 0
+
+    cars = []
+    while len(cars) < 10:
+        c_id = random.randint(1, 9190)
+        c = db.session.execute(db.select(Car).where(Car.car_id == c_id)).scalar()
+        if c is None:
+            continue
+
+        if int(c.make_id) in c_make:
+            cars.append(c)
+
     n = {}
-
     for i in range(10):
-        make = db.session.execute(db.select(Car_Make).where(Car_Make.make_id == m[i].make_id)).scalar()
-        model = db.session.execute(db.select(Car_Model).where(Car_Model.model_id == m[i].model_id)).scalar()
-        image = db.session.execute(db.select(Car_Image).where(Car_Image.image_id == m[i].image_id)).scalar()
+        make = db.session.execute(db.select(Car_Make).where(Car_Make.make_id == cars[i].make_id)).scalar()
+        model = db.session.execute(db.select(Car_Model).where(Car_Model.model_id == cars[i].model_id)).scalar()
+        image = db.session.execute(db.select(Car_Image).where(Car_Image.image_id == cars[i].image_id)).scalar()
 
-        n["item"+str(i + 1)] = {"year": m[i].car_year, "make": make.make_name, "model": model.model_name, "image": image.image_url}
+        n["item"+str(i + 1)] = {"query_id": query_id, "year": cars[i].car_year, "make": make.make_name.capitalize(), "model": model.model_name.capitalize(), "image": image.image_url}
 
     return n
 
@@ -80,22 +164,81 @@ def recommend_cars():
 def get_listings():
     data = request.get_json()
 
+    q_id = data.get("query_id")
+    s_rank = data.get("selection_rank").split("m")[1]
     make = data.get("make")
     model = data.get("model")
     year = data.get("year")
+
+    if int(q_id) == 0:
+        pass
+    else:
+        new_query = User_Selection(
+            user_id=int(session["user_id"]),
+            query_id=int(q_id),
+            selection_rank=int(s_rank)
+        )
+        db.session.add(new_query)
+        db.session.commit()
 
     result = check(make, model, year)
 
     return result
 
-@app.route("/api/makes", methods=["GET"])
-def makes():
+
+@app.route("/register", methods=["POST"])
+def register():
+    data = request.get_json()
+
+    username = data.get("user_name")
+    password = data.get("user_pass")
+    email = data.get("user_email")
+    fname = data.get("user_fname")
+    lname = data.get("user_lname")
+
     try:
-        response = requests.get(CAR_API)
-        makes = response.json()
-        return jsonify(makes)
+        new_user = User(user_name=username, user_pass=password, user_email=email, user_fname=fname, user_lname=lname)
+        db.session.add(new_user)
+        db.session.commit()
+        return {"message": "User Created"}
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        # (pymysql.err.IntegrityError) (1062, "Duplicate entry 'lindonc' for key 'User.user_name'")
+        # [SQL: INSERT INTO `User` (user_name, user_pass, user_email, user_fname, user_lname, user_date_created) VALUES (%(user_name)s, %(user_pass)s, %(user_email)s, %(user_fname)s, %(user_lname)s, CURRENT_TIMESTAMP)]
+        # [parameters: {'user_name': 'lindonc', 'user_pass': 'test', 'user_email': 'lindonc@test.com', 'user_fname': 'Lindon', 'user_lname': 'Camaj'}]
+        # (Background on this error at: https://sqlalche.me/e/20/gkpj)
+        print(e)
+        return {"message": "User Already Exists"}
+
+
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.get_json()
+
+    username = data.get("user_name")
+    password = data.get("user_pass")
+
+    user_info = db.session.execute(db.select(User).where(User.user_name == username)).scalar()
+
+    if user_info and user_info.user_pass == password:
+        session["user_id"] = user_info.user_id
+        print(session)
+        return {"message": "Successfully Logged-in"}
+    else:
+        return {"message": "Invalid username or password."}
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.pop('user_id', None)
+    return {}
+
+@app.route("/session", methods=["GET"])
+def check_session():
+    print(session)
+    if "user_id" in session:
+        print("login")
+        return {"logged_in": True, "user_id": session["user_id"]}, 200
+    print("logout")
+    return {"logged_in": False}, 200
 
 @app.route('/')
 def serve():
