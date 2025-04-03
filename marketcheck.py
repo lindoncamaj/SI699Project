@@ -20,7 +20,7 @@ api_key = "2fF3nUvfScNJ2V99N3KYDQmFzxhCApSc"
 # ex: avg car price - https://mc-api.marketcheck.com/v2/search/car/uk/active?api_key={{api_key}}&make=ford&car_type=used&start=1&rows=0&stats=price,miles&latitude=54.87&longitude=-6.228&radius=100
 
 
-def check(make, model, year):
+def check(make, model, year, location):
     url = f"https://mc-api.marketcheck.com/v2/search/car/active?api_key={api_key}&year={year}make={make}&model={model}&include_relevant_links=true"
 
     payload={}
