@@ -11,7 +11,7 @@ cors = CORS(app, origins='*', supports_credentials=True)
 
 user = "admin"
 pin = "si699matchmycar"
-host = "database2.cyjek8guse5h.us-east-1.rds.amazonaws.com"
+host = "database-1.cyjek8guse5h.us-east-1.rds.amazonaws.com"
 db_name = "car_database"
 db2_name = "user_database"
 
@@ -47,6 +47,18 @@ class Car_Image(db.Model):
     image_id = db.Column(db.Integer, primary_key=True)
     image_url = db.Column(db.String(255), nullable=False)
 
+class Car_Drivetrain(db.Model):
+    __bind_key__ = 'car_data'
+    __tablename__ = "Car_Drivetrain"
+    drivetrain_id = db.Column(db.Integer, primary_key=True)
+    drivetrain_name = db.Column(db.String(16), nullable=False)
+
+class Car_Fuel_Type(db.Model):
+    __bind_key__ = 'car_data'
+    __tablename__ = "Car_Fuel_Type"
+    fuel_type_id = db.Column(db.Integer, primary_key=True)
+    fuel_type_name = db.Column(db.String(32), nullable=False)
+
 class Car(db.Model):
     __bind_key__ = 'car_data'
     __tablename__ = "Car"
@@ -55,12 +67,16 @@ class Car(db.Model):
     make_id = db.Column(db.Integer, db.ForeignKey('Car_Make.make_id'), nullable=False)
     trim_id = db.Column(db.Integer, db.ForeignKey("Car_Trim.trim_id"), nullable=False)
     image_id = db.Column(db.Integer, db.ForeignKey("Car_Image.image_id"), nullable=False)
+    drivetrain_id = db.Column(db.Integer, db.ForeignKey("Car_Drivetrain.drivetrain_id"), nullable=False)
+    fuel_type_id = db.Column(db.Integer, db.ForeignKey("Car_Fuel_Type.fuel_type_id"), nullable=False)
     car_year = db.Column(db.Integer, nullable=False)
-    car_msrp = db.Column(db.DECIMAL(10, 2), nullable=False)
     car_min_price = db.Column(db.DECIMAL(10, 2))
     car_med_price = db.Column(db.DECIMAL(10, 2))
     car_expert_score = db.Column(db.DECIMAL(10, 2))
     car_consumer_score = db.Column(db.DECIMAL(10, 2))
+    car_city_fuel_economy = db.Column(db.Integer)
+    car_hwy_fuel_economy = db.Column(db.Integer)
+    car_comb_fuel_economy = db.Column(db.Integer)
 
 class User(db.Model):
     __bind_key__ = 'user_data'
@@ -142,7 +158,7 @@ def recommend_cars():
 
     cars = []
     while len(cars) < 10:
-        c_id = random.randint(1, 9190)
+        c_id = random.randint(1, 19843)
         c = db.session.execute(db.select(Car).where(Car.car_id == c_id)).scalar()
         if c is None:
             continue
@@ -156,7 +172,7 @@ def recommend_cars():
         model = db.session.execute(db.select(Car_Model).where(Car_Model.model_id == cars[i].model_id)).scalar()
         image = db.session.execute(db.select(Car_Image).where(Car_Image.image_id == cars[i].image_id)).scalar()
 
-        n["item"+str(i + 1)] = {"query_id": query_id, "year": cars[i].car_year, "make": make.make_name.capitalize(), "model": model.model_name.capitalize(), "image": image.image_url}
+        n["item"+str(i + 1)] = {"query_id": query_id, "zip": location, "year": cars[i].car_year, "make": make.make_name.capitalize(), "model": model.model_name.capitalize(), "image": image.image_url}
 
     return n
 
@@ -169,6 +185,7 @@ def get_listings():
     make = data.get("make")
     model = data.get("model")
     year = data.get("year")
+    location = data.get("zip")
 
     if int(q_id) == 0:
         pass
@@ -181,7 +198,7 @@ def get_listings():
         db.session.add(new_query)
         db.session.commit()
 
-    result = check(make, model, year)
+    result = check(make, model, year, location)
 
     return result
 
