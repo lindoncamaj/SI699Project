@@ -9,13 +9,14 @@ const Recs = () => {
   const navigate = useNavigate();
   const formData = location.state || {}; // Get form data from state
 
-  const handleLinkClick = (query_id, selection_rank, make, model, year) => {
+  const handleLinkClick = (query_id, selection_rank, make, model, year, zip) => {
     const data = {
       "query_id": query_id,
       "selection_rank": selection_rank,
       "make": make,
       "model": model,
-      "year": year
+      "year": year,
+      "zip": zip
     }
     // Navigate to the recommendations page with the car make as a query parameter
     axios.post("http://localhost:8080/lists", data, { withCredentials: true }).then((response) => {navigate("/listings", {state: response.data})});
@@ -46,7 +47,7 @@ const Recs = () => {
                 <Button
                   variant="contained"
                   color="primary"
-                  onClick={() => handleLinkClick(formData[key].query_id, key, formData[key].make, formData[key].model, formData[key].year)}
+                  onClick={() => handleLinkClick(formData[key].query_id, key, formData[key].make, formData[key].model, formData[key].year, formData[key].zip)}
                 >
                   View Details
                 </Button>
