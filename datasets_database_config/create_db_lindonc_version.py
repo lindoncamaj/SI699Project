@@ -28,47 +28,39 @@ def create_car_tables(cur):
             image_url VARCHAR(255) NOT NULL UNIQUE
         );""",
 
+        """CREATE TABLE IF NOT EXISTS Car_Drivetrain (
+            drivetrain_id INT PRIMARY KEY AUTO_INCREMENT,
+            drivetrain_name VARCHAR(16) NOT NULL UNIQUE
+        )""",
+        """CREATE TABLE IF NOT EXISTS Car_Fuel_Type (
+            fuel_type_id INT PRIMARY KEY AUTO_INCREMENT,
+            fuel_type_name VARCHAR(32) NOT NULL UNIQUE
+        )""",
+
         """CREATE TABLE IF NOT EXISTS Car (
             car_id INT PRIMARY KEY AUTO_INCREMENT,
             make_id INT NOT NULL,
             model_id INT NOT NULL,
             trim_id INT NOT NULL,
             image_id INT NOT NULL,
+            drivetrain_id INT NOT NULL,
+            fuel_type_id INT NOT NULL,
             car_year INT NOT NULL,
-            car_msrp DECIMAL(10,2) NOT NULL,
             car_min_price DECIMAL(10,2),
             car_med_price DECIMAL(10,2),
             car_expert_score DECIMAL(10,2),
             car_consumer_score DECIMAL(10,2),
+            car_city_fuel_economy INT,
+            car_hwy_fuel_economy INT,
+            car_comb_fuel_economy INT,
 
             FOREIGN KEY (make_id) REFERENCES Car_Make(make_id) ON DELETE CASCADE,
             FOREIGN KEY (model_id) REFERENCES Car_Model(model_id) ON DELETE CASCADE,
             FOREIGN KEY (trim_id) REFERENCES Car_Trim(trim_id) ON DELETE CASCADE,
-            FOREIGN KEY (image_id) REFERENCES Car_Image(image_id) ON DELETE CASCADE
+            FOREIGN KEY (image_id) REFERENCES Car_Image(image_id) ON DELETE CASCADE,
+            FOREIGN KEY (drivetrain_id) REFERENCES Car_Drivetrain(drivetrain_id) ON DELETE CASCADE,
+            FOREIGN KEY (fuel_type_id) REFERENCES Car_Fuel_Type(fuel_type_id) ON DELETE CASCADE
         );""",
-
-        """CREATE TABLE IF NOT EXISTS Fuel_Economy (
-            trim_id INT PRIMARY KEY,
-            mileage_epa_combined_mpg DECIMAL(5,2),
-            mileage_epa_city_mpg DECIMAL(5,2),
-            mileage_epa_highway_mpg DECIMAL(5,2),
-            FOREIGN KEY (trim_id) REFERENCES Car_Trim(trim_id) ON DELETE CASCADE
-        );""",
-
-        """CREATE TABLE IF NOT EXISTS Electric_Vehicle (
-            trim_id INT PRIMARY KEY,
-            range_electric DECIMAL(5,2) NOT NULL,
-            epa_kwh_100_mi DECIMAL(5,2) NOT NULL,
-            battery_capacity DECIMAL(5,2),
-            charging_time_240v_hr DECIMAL(5,2),
-            FOREIGN KEY (trim_id) REFERENCES Car_Trim(trim_id) ON DELETE CASCADE
-        );""",
-
-        """CREATE TABLE IF NOT EXISTS Safety_Rating (
-            trim_id INT PRIMARY KEY,
-            accident_safety_rating DECIMAL(3,1) NOT NULL,
-            FOREIGN KEY (trim_id) REFERENCES Car_Trim(trim_id) ON DELETE CASCADE
-        );"""
     ]
 
     for query in table_queries:
@@ -79,9 +71,11 @@ def insert_car_data(cur, car_data):
     model_insert_query = """INSERT INTO Car_Model (model_id, model_name) VALUES (%s, %s);"""
     trim_insert_query = """INSERT INTO Car_Trim (trim_id, trim_name) VALUES (%s, %s);"""
     image_insert_query = """INSERT INTO Car_Image (image_id, image_url) VALUES (%s, %s);"""
+    drivetrain_insert_query = """INSERT INTO Car_Drivetrain (drivetrain_id, drivetrain_name) VALUES (%s, %s);"""
+    fuel_type_insert_query = """INSERT INTO Car_Fuel_Type (fuel_type_id, fuel_type_name) VALUES (%s, %s);"""
     car_insert_query = """
-        INSERT INTO Car (make_id, model_id, trim_id, image_id, car_year, car_msrp, car_min_price, car_med_price, car_expert_score, car_consumer_score)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+        INSERT INTO Car (make_id, model_id, trim_id, image_id, drivetrain_id, fuel_type_id, car_year, car_min_price, car_med_price, car_expert_score, car_consumer_score, car_city_fuel_economy, car_hwy_fuel_economy, car_comb_fuel_economy)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
     """
 
     for _, row in car_data.iterrows():
@@ -106,7 +100,17 @@ def insert_car_data(cur, car_data):
             pass
 
         try:
-            cursor.execute(car_insert_query, (row["make_id"], row["model_id"], row["trim_id"], row["image_id"], row["year"], row["trim_msrp"], row["min_price"], row["median_price"], row["expert_score"], row["consumer_score"]))
+            cursor.execute(drivetrain_insert_query, (row["drivetrain_id"], row["drivetrain"]))
+        except:
+            pass
+
+        try:
+            cursor.execute(fuel_type_insert_query, (row["fuel_type_id"], row["fuel_type"]))
+        except:
+            pass
+
+        try:
+            cursor.execute(car_insert_query, (row["make_id"], row["model_id"], row["trim_id"], row["image_id"], row["drivetrain_id"], row["fuel_type_id"], row["year"], row["min_price"], row["med_price"], row["expert_score"], row["consumer_score"], row["city_fuel_economy"], row["hwy_fuel_economy"], row["comb_fuel_economy"]))
         except Exception as e:
             print(e)
             print(f"make id: {row['make_id']}")
@@ -216,7 +220,7 @@ def insert_user_data(cur, user_data):
 
 if __name__ == "__main__":
     connection = pymysql.connect(
-            host = "database2.cyjek8guse5h.us-east-1.rds.amazonaws.com",
+            host = "database-1.cyjek8guse5h.us-east-1.rds.amazonaws.com",
             user = "admin",
             password = "si699matchmycar",
             port = 3306
@@ -237,7 +241,7 @@ if __name__ == "__main__":
     # connection.commit()
     # print("Tables have been created")
 
-    # car_data = pd.read_csv("combined.csv")
+    # car_data = pd.read_csv("all_makes_models_complete.csv")
     # car_data = car_data.replace({np.nan: None})
     # insert_car_data(cursor, car_data)
     # connection.commit()
@@ -252,7 +256,7 @@ if __name__ == "__main__":
     # data = cursor.fetchall()
     # print(data)
 
-    cursor.execute("SELECT * FROM User_Selection;")
+    cursor.execute("SELECT * FROM User;")
     data = cursor.fetchall()
     print(data)
 
