@@ -248,6 +248,44 @@ def logout():
     session.pop('user_id', None)
     return {}
 
+@app.route("/edit-profile", methods=["GET"])
+def get_profile():
+    if "user_id" not in session:
+        return jsonify({"message": "Not logged in"}), 401
+
+    user = db.session.get(User, session["user_id"])
+    if user:
+        return jsonify({
+            "user_name": user.user_name,
+            "user_email": user.user_email,
+            "user_fname": user.user_fname,
+            "user_lname": user.user_lname,
+            "user_pass": user.user_pass
+        })
+    return jsonify({"message": "User not found"}), 404
+
+@app.route("/edit-profile", methods=["POST"])
+def update_profile():
+    if "user_id" not in session:
+        return jsonify({"message": "Not logged in"}), 401
+
+    data = request.get_json()
+    user = db.session.get(User, session["user_id"])
+    
+    if user:
+        user.user_name = data.get("user_name", user.user_name)
+        user.user_fname = data.get("user_fname", user.user_fname)
+        user.user_lname = data.get("user_lname", user.user_lname)
+        user.user_email = data.get("user_email", user.user_email)
+        new_password = data.get("user_pass")
+
+        if new_password:
+            user.user_pass = new_password 
+        db.session.commit()
+        return jsonify({"message": "Profile updated successfully"})
+    
+    return jsonify({"message": "User not found"}), 404
+
 @app.route("/session", methods=["GET"])
 def check_session():
     print(session)
