@@ -19,7 +19,7 @@ const Recs = () => {
       "zip": zip
     }
     // Navigate to the recommendations page with the car make as a query parameter
-    axios.post("http://localhost:8080/lists", data, { withCredentials: true }).then((response) => {navigate("/listings", {state: response.data})});
+    axios.post("http://0.0.0.0:8080/lists", data, { withCredentials: true }).then((response) => {navigate("/listings", {state: response.data})});
   };
 
 

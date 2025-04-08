@@ -64,7 +64,7 @@ function Form() {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const response = await axios.get("http://localhost:8080/session", {
+        const response = await axios.get("http://0.0.0.0:8080/session", {
           withCredentials: true,
         });
         if (!response.data.logged_in) {
@@ -87,7 +87,7 @@ function Form() {
   const handleLogout = async () => {
     try {
       await axios.post(
-        "http://localhost:8080/logout",
+        "http://0.0.0.0:8080/logout",
         {},
         { withCredentials: true }
       );
@@ -137,7 +137,7 @@ function Form() {
 
     // Navigate to Recs page and pass form data
     axios
-      .post("http://localhost:8080/recommend", data, { withCredentials: true })
+      .post("http://0.0.0.0:8080/recommend", data, { withCredentials: true })
       .then((response) => {
         navigate("/recs", { state: response.data });
       });

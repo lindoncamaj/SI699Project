@@ -25,7 +25,7 @@ function Login() {
     };
 
     // Pass form data to flask login function
-    axios.post("http://localhost:8080/login", data, { withCredentials: true }).then((response) => {
+    axios.post("http://0.0.0.0:8080/login", data, { withCredentials: true }).then((response) => {
       alert(response.data.message);
       if (response.data.message === "Successfully Logged-in") {
         login();

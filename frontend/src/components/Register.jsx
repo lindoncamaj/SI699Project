@@ -31,7 +31,7 @@ function Register() {
     };
 
     // Pass form data to flask login function
-    axios.post("http://localhost:8080/register", data).then((response) => {
+    axios.post("http://0.0.0.0:8080/register", data).then((response) => {
       alert(response.data.message);
       navigate("/login");
       //navigate("/register", {state: response.data});

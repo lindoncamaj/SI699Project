@@ -9,13 +9,13 @@ export default function EditProfile() {
     user_email: "",
     user_fname: "",
     user_lname: "",
-    user_pass: "" 
+    user_pass: ""
   });
   const navigate = useNavigate();
 
   const fetchProfile = async () => {
     try {
-      const res = await axios.get("http://localhost:8080/edit-profile", { withCredentials: true });
+      const res = await axios.get("http://0.0.0.0:8080/edit-profile", { withCredentials: true });
       setProfile(res.data);
     } catch (error) {
       console.error("Failed to fetch profile", error);
@@ -29,7 +29,7 @@ export default function EditProfile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://localhost:8080/edit-profile", profile, { withCredentials: true });
+      await axios.post("http://0.0.0.0:8080/edit-profile", profile, { withCredentials: true });
       alert("Profile updated!");
       navigate("/");
     } catch (error) {

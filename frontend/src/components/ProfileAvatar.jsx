@@ -13,7 +13,7 @@ function ProfileAvatar() {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        const res = await axios.get("http://localhost:8080/session", {
+        const res = await axios.get("http://0.0.0.0:8080/session", {
           withCredentials: true,
         });
         if (res.data.logged_in) {
