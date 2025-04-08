@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
 import Select from "react-select";
+import { useAuth } from '../context/AuthContext'; // Import the useAuth hook
 
 function Form() {
   const [minPrice, setMinPrice] = useState("");
@@ -54,9 +55,11 @@ function Form() {
   });
 
   const navigate = useNavigate(); // Initialize navigation
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { isLoggedIn, logout } = useAuth(); // Use authentication state and functions from context
+
+  // const [user, setUser] = useState(null);
+  // const [loading, setLoading] = useState(true);
+  // const [error, setError] = useState(null);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -64,18 +67,18 @@ function Form() {
         const response = await axios.get("http://localhost:8080/session", {
           withCredentials: true,
         });
-        if (response.data.logged_in) {
-          setUser(response.data.user_id); // Set user ID or any user info you need
+        if (!response.data.logged_in) {
+          logout(); // If not logged in, call logout to update context
         }
-      } catch (err) {
-        setError(err);
-      } finally {
-        setLoading(false);
+        // If you do something on logged in status, manage within context
+      } catch (error) {
+        console.error("Error checking session:", error);
+        logout();
       }
     };
 
     checkSession();
-  }, []);
+  }, [logout]);
 
   const handleLogin = () => {
     navigate("/login"); // Redirect to the login page
@@ -88,9 +91,9 @@ function Form() {
         {},
         { withCredentials: true }
       );
-      setUser(null); // Clear user state
-    } catch (err) {
-      setError(err);
+      logout(); // Call logout from context
+    } catch (error) {
+      console.error("Logout error:", error);
     }
   };
 
@@ -113,7 +116,7 @@ function Form() {
       !maxPrice ||
       !location ||
       !carMake ||
-      !drivetrain ||
+      !Object.values(drivetrain).includes(true)  ||
       !Object.values(carType).includes(true) ||
       !Object.values(electric).includes(true)
     ) {
@@ -169,12 +172,23 @@ function Form() {
       truck: false,
     });
     setCarMake("");
+    setDrivetrain({
+      fwd: false,
+      rwd: false,
+      awd: false,
+    });
+    setElectric({
+      elec: false,
+      gas: false,
+      hybrid: false,
+    });
+    setMinMPG(0);
   };
   return (
     <div className="Form">
       <h1>Match My Car</h1>
-      <button onClick={user ? handleLogout : handleLogin}>
-        {user ? "Logout" : "Login"}
+      <button onClick={isLoggedIn ? handleLogout : handleLogin}>
+        {isLoggedIn ? "Logout" : "Login"}
       </button>
 
       <fieldset>
@@ -199,7 +213,7 @@ function Form() {
             placeholder="Enter max price"
             required
           />
-          {/* <label htmlFor="location">Location*</label>
+          <label htmlFor="location">Location*</label>
           <input
             type="text"
             name="location"
@@ -208,7 +222,7 @@ function Form() {
             onChange={(e) => setLocation(e.target.value)}
             placeholder="Enter City or Zip Code"
             required
-          /> */}
+          />
           {/* CAR TYPE CHECKBOX */}
           <label htmlFor="carType">Car Type*</label>
           <input
@@ -277,7 +291,7 @@ function Form() {
             type="checkbox"
             name="drivetrain"
             id="fwd"
-            checked={electric.elec === true}
+            checked={drivetrain.fwd === true}
             onChange={(e) => handleDrivetrain("fwd")}
           />
           Front Wheel Drive
@@ -285,7 +299,7 @@ function Form() {
             type="checkbox"
             name="drivetrain"
             id="rwd"
-            checked={electric.gas === true}
+            checked={drivetrain.rwd === true}
             onChange={(e) => handleDrivetrain("rwd")}
           />
           Rear Wheel Drive
@@ -293,7 +307,7 @@ function Form() {
             type="checkbox"
             name="drivetrain"
             id="awd"
-            checked={electric.hybrid === true}
+            checked={drivetrain.awd === true}
             onChange={(e) => handleDrivetrain("awd")}
           />
           All Wheel Drive
