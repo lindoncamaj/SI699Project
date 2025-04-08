@@ -271,7 +271,7 @@ def update_profile():
 
     data = request.get_json()
     user = db.session.get(User, session["user_id"])
-    
+
     if user:
         user.user_name = data.get("user_name", user.user_name)
         user.user_fname = data.get("user_fname", user.user_fname)
@@ -283,7 +283,7 @@ def update_profile():
             user.user_pass = new_password 
         db.session.commit()
         return jsonify({"message": "Profile updated successfully"})
-    
+
     return jsonify({"message": "User not found"}), 404
 
 @app.route("/session", methods=["GET"])
