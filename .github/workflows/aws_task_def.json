@@ -1,0 +1,58 @@
+{
+    "family": "si699td_test",
+    "containerDefinitions": [
+        {
+            "name": "test",
+            "image": "076231254913.dkr.ecr.us-east-1.amazonaws.com/si699/crs",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "80",
+                    "containerPort": 80,
+                    "hostPort": 80,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                },
+                {
+                    "name": "8080",
+                    "containerPort": 8080,
+                    "hostPort": 8080,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [],
+            "environmentFiles": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "ulimits": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/",
+                    "mode": "non-blocking",
+                    "awslogs-create-group": "true",
+                    "max-buffer-size": "25m",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        }
+    ],
+    "executionRoleArn": "arn:aws:iam::076231254913:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "volumes": [],
+    "placementConstraints": [],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "1024",
+    "memory": "3072",
+    "runtimePlatform": {
+        "cpuArchitecture": "ARM64",
+        "operatingSystemFamily": "LINUX"
+    },
+    "enableFaultInjection": false
+}
