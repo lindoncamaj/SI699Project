@@ -210,7 +210,7 @@ def insert_user_data(cur, user_data):
     user_insert_query = """INSERT INTO User (user_name, user_pass, user_email, user_fname, user_lname) VALUES (%s, %s, %s, %s, %s);"""
 
     try:
-        cursor.execute(user_insert_query, (row["name"], row["pass"], row["email"], row["fname"], row["lname"]))
+        cursor.execute(user_insert_query, (user_data["name"], user_data["pass"], user_data["email"], user_data["fname"], user_data["lname"]))
     except:
         pass
 
@@ -220,7 +220,7 @@ def insert_user_data(cur, user_data):
 
 if __name__ == "__main__":
     connection = pymysql.connect(
-            host = "database-1.cyjek8guse5h.us-east-1.rds.amazonaws.com",
+            host = "database-2.cyjek8guse5h.us-east-1.rds.amazonaws.com",
             user = "admin",
             password = "si699matchmycar",
             port = 3306
