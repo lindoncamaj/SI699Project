@@ -11,7 +11,7 @@ cors = CORS(app, origins='*', supports_credentials=True)
 
 user = "admin"
 pin = "si699matchmycar"
-host = "database-1.cyjek8guse5h.us-east-1.rds.amazonaws.com"
+host = "database-2.cyjek8guse5h.us-east-1.rds.amazonaws.com"
 db_name = "car_database"
 db2_name = "user_database"
 
