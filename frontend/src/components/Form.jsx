@@ -146,7 +146,7 @@ function Form() {
         navigate("/recs", { state: response.data });
       })
       .catch((error) => {
-        console.error("Error getting recommendations:", error);
+        console.error("Error loading page:", error);
         setLoading(false); // hide on error
       });
   };
