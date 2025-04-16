@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
 import Select from "react-select";
 import { useAuth } from '../context/AuthContext'; // Import the useAuth hook
+import LoadingScreen from "./LoadingScreen";
 
 function Form() {
   const [minPrice, setMinPrice] = useState("");
@@ -56,6 +57,7 @@ function Form() {
 
   const navigate = useNavigate(); // Initialize navigation
   const { isLoggedIn, logout } = useAuth(); // Use authentication state and functions from context
+  const [loading, setLoading] = useState(false);
 
   // const [user, setUser] = useState(null);
   // const [loading, setLoading] = useState(true);
@@ -135,11 +137,17 @@ function Form() {
       minMPG,
     };
 
+    setLoading(true);
+
     // Navigate to Recs page and pass form data
     axios
       .post("http://0.0.0.0:8080/recommend", data, { withCredentials: true })
       .then((response) => {
         navigate("/recs", { state: response.data });
+      })
+      .catch((error) => {
+        console.error("Error getting recommendations:", error);
+        setLoading(false); // hide on error
       });
   };
 
@@ -184,7 +192,9 @@ function Form() {
     });
     setMinMPG(0);
   };
-  return (
+  return loading ? (
+    <LoadingScreen />
+  ) :  (
     <div className="Form">
       <h1>Match My Car</h1>
       <button onClick={isLoggedIn ? handleLogout : handleLogin}>
