@@ -91,6 +91,7 @@ def filtering(cur, min_price, max_price,
 
     return results
 
+# sorting
 def recommend(matched,
               query_id=None,
               location=None,
@@ -168,10 +169,25 @@ if __name__ == "__main__":
     )
     cursor = connection.cursor()
 
-    # example test
-    recommended_cars = recommend(cursor, min_price=20000,
-                                 max_price=50000, c_type=['SUV'],
-                                 c_make=["Hyundai", "BMW"])
+    # example usage
+    matched = filtering(cursor,
+                        min_price=20000,
+                        max_price=50000,
+                        c_make_ids=[1, 2, 3], # the list of make ids ex. Hyundai, Toyota, BMW
+                        ev=True,
+                        gas=True,
+                        hybrid=False,
+                        awd=True,
+                        fwd=True,
+                        rwd=False,
+                        fuel_economy=20)
+    
+    # sorted_recs should be a dictionary of dictionaries
+    # key: "itemX", where X is 1~50
+    # value: dictionary
+    sorted_recs = recommend(matched,
+                            query_id=1,
+                            location=48103)
 
     cursor.close()
     connection.close()
