@@ -128,9 +128,13 @@ def recommend_cars():
     suv = c_type["suv"]
     truck = c_type["truck"]
     c_make = [int(car["value"]) for car in data.get("carMake")]
+    c_year = int(data.get("carYear")["value"])
     elec = data.get("electric")["elec"]
     gas = data.get("electric")["gas"]
     hybrid = data.get("electric")["hybrid"]
+    fwd = data.get("drivetrain")["fwd"]
+    rwd = data.get("drivetrain")["rwd"]
+    awd = data.get("drivetrain")["awd"]
     minMPG = data.get("minMPG")
 
     if "user_id" in session:
@@ -156,25 +160,7 @@ def recommend_cars():
         print("no user in session")
         query_id = 0
 
-    cars = []
-    while len(cars) < 10:
-        c_id = random.randint(1, 19843)
-        c = db.session.execute(db.select(Car).where(Car.car_id == c_id)).scalar()
-        if c is None:
-            continue
-
-        if int(c.make_id) in c_make:
-            cars.append(c)
-
-    n = {}
-    for i in range(10):
-        make = db.session.execute(db.select(Car_Make).where(Car_Make.make_id == cars[i].make_id)).scalar()
-        model = db.session.execute(db.select(Car_Model).where(Car_Model.model_id == cars[i].model_id)).scalar()
-        image = db.session.execute(db.select(Car_Image).where(Car_Image.image_id == cars[i].image_id)).scalar()
-
-        n["item"+str(i + 1)] = {"query_id": query_id, "zip": location, "year": cars[i].car_year, "make": make.make_name.capitalize(), "model": model.model_name.capitalize(), "image": image.image_url}
-
-    return n
+    return recommend(min_price, max_price, c_make, c_year, elec, gas, hybrid, awd, fwd, rwd, minMPG, query_id, location)
 
 @app.route("/lists", methods=["POST"])
 def get_listings():
@@ -248,6 +234,32 @@ def logout():
     session.pop('user_id', None)
     return {}
 
+@app.route("/profile", methods=["GET"])
+def get_profile_info():
+    if "user_id" not in session:
+        return jsonify({"message": "Not logged in"}), 401
+
+    user = db.session.get(User, session["user_id"])
+    if user:
+        user_queries = db.session.execute(db.select(User_Query).where(User_Query.user_id == session["user_id"])).scalars()
+        for q in user_queries:
+            print(q)
+        if user_queries:
+            return jsonify({
+                "user_name": user.user_name,
+                "user_email": user.user_email,
+                "user_fname": user.user_fname,
+                "user_lname": user.user_lname
+            })
+        else:
+            return jsonify({
+                "user_name": user.user_name,
+                "user_email": user.user_email,
+                "user_fname": user.user_fname,
+                "user_lname": user.user_lname
+            })
+    return jsonify({"message": "User not found"}), 404
+
 @app.route("/edit-profile", methods=["GET"])
 def get_profile():
     if "user_id" not in session:
@@ -280,7 +292,7 @@ def update_profile():
         new_password = data.get("user_pass")
 
         if new_password:
-            user.user_pass = new_password 
+            user.user_pass = new_password
         db.session.commit()
         return jsonify({"message": "Profile updated successfully"})
 
