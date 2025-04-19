@@ -1,13 +1,14 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 import { useAuth } from '../context/AuthContext';
+import axios from "axios";
 
 function Login() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
   const [user_name, setUsername] = useState("");
   const [user_pass, setPassword] = useState("");
-  const { login } = useAuth();
-  const navigate = useNavigate(); // Initialize navigation
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -25,7 +26,7 @@ function Login() {
     };
 
     // Pass form data to flask login function
-    axios.post("http://0.0.0.0:8080/login", data, { withCredentials: true }).then((response) => {
+    axios.post("http://127.0.0.1:8080/login", data, { withCredentials: true }).then((response) => {
       alert(response.data.message);
       if (response.data.message === "Successfully Logged-in") {
         login();
@@ -35,8 +36,8 @@ function Login() {
       }
     });
   };
+  // Reset all state variables here
   const handleReset = () => {
-    // Reset all state variables here
     setUsername("");
     setPassword("");
   };
@@ -45,7 +46,7 @@ function Login() {
     navigate("/register");
   };
   return (
-    <div className="Form">
+    <div>
       <h1>Login</h1>
       <a href="#" onClick={handleRegisterClick}>Register</a>
       <fieldset>
