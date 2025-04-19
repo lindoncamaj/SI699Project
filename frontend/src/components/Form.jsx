@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 import Select from "react-select";
-import { useAuth } from '../context/AuthContext'; // Import the useAuth hook
+import axios from "axios";
 import LoadingScreen from "./LoadingScreen";
 
 function Form() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [location, setLocation] = useState("");
@@ -43,7 +45,24 @@ function Form() {
     { value: "25", label: "Volkswagen" },
     { value: "26", label: "Volvo" },
   ];
-  const [minMPG, setMinMPG] = useState(0);
+  const[carYear, setCarYear] = useState(2010);
+  const years = [
+    { value: 2010, label: 2010 },
+    { value: 2011, label: 2011 },
+    { value: 2012, label: 2012 },
+    { value: 2013, label: 2013 },
+    { value: 2014, label: 2014 },
+    { value: 2015, label: 2015 },
+    { value: 2016, label: 2016 },
+    { value: 2017, label: 2017 },
+    { value: 2018, label: 2018 },
+    { value: 2019, label: 2019 },
+    { value: 2020, label: 2020 },
+    { value: 2021, label: 2021 },
+    { value: 2022, label: 2022 },
+    { value: 2023, label: 2023 },
+    { value: 2024, label: 2024 },
+  ]
   const [electric, setElectric] = useState({
     elec: false,
     gas: false,
@@ -54,50 +73,7 @@ function Form() {
     rwd: false,
     awd: false,
   });
-
-  const navigate = useNavigate(); // Initialize navigation
-  const { isLoggedIn, logout } = useAuth(); // Use authentication state and functions from context
-  const [loading, setLoading] = useState(false);
-
-  // const [user, setUser] = useState(null);
-  // const [loading, setLoading] = useState(true);
-  // const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const checkSession = async () => {
-      try {
-        const response = await axios.get("http://0.0.0.0:8080/session", {
-          withCredentials: true,
-        });
-        if (!response.data.logged_in) {
-          logout(); // If not logged in, call logout to update context
-        }
-        // If you do something on logged in status, manage within context
-      } catch (error) {
-        console.error("Error checking session:", error);
-        logout();
-      }
-    };
-
-    checkSession();
-  }, [logout]);
-
-  const handleLogin = () => {
-    navigate("/login"); // Redirect to the login page
-  };
-
-  const handleLogout = async () => {
-    try {
-      await axios.post(
-        "http://0.0.0.0:8080/logout",
-        {},
-        { withCredentials: true }
-      );
-      logout(); // Call logout from context
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
-  };
+  const [minMPG, setMinMPG] = useState(0);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -106,6 +82,7 @@ function Form() {
       maxPrice,
       location,
       carMake,
+      carYear,
       carType,
       minMPG,
       electric,
@@ -118,6 +95,7 @@ function Form() {
       !maxPrice ||
       !location ||
       !carMake ||
+      !carYear ||
       !Object.values(drivetrain).includes(true)  ||
       !Object.values(carType).includes(true) ||
       !Object.values(electric).includes(true)
@@ -132,6 +110,7 @@ function Form() {
       location,
       carType,
       carMake,
+      carYear,
       electric,
       drivetrain,
       minMPG,
@@ -141,7 +120,7 @@ function Form() {
 
     // Navigate to Recs page and pass form data
     axios
-      .post("http://0.0.0.0:8080/recommend", data, { withCredentials: true })
+      .post("http://127.0.0.1:8080/recommend", data, { withCredentials: true })
       .then((response) => {
         navigate("/recs", { state: response.data });
       })
@@ -180,6 +159,7 @@ function Form() {
       truck: false,
     });
     setCarMake("");
+    setCarYear(2010);
     setDrivetrain({
       fwd: false,
       rwd: false,
@@ -195,11 +175,8 @@ function Form() {
   return loading ? (
     <LoadingScreen />
   ) :  (
-    <div className="Form">
-      <h1>Match My Car</h1>
-      <button onClick={isLoggedIn ? handleLogout : handleLogin}>
-        {isLoggedIn ? "Logout" : "Login"}
-      </button>
+    <div>
+      <h1>Find My Car</h1>
 
       <fieldset>
         <form action="#" method="get">
@@ -230,7 +207,7 @@ function Form() {
             id="location"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            placeholder="Enter City or Zip Code"
+            placeholder="Enter Zip Code"
             required
           />
           {/* CAR TYPE CHECKBOX */}
@@ -269,6 +246,14 @@ function Form() {
             value={carMake}
             onChange={(e) => setCarMake(e)}
           />
+          <label>Minimum Car Year*</label>
+          <Select
+            name="year"
+            id="select"
+            options={years}
+            value={carYear}
+            onChange={(e) => setCarYear(e)}
+          />
           {/* ELECTRIC/GAS/HYBRID CHECKBOX */}
           <label>Electric/Gas/Hybrid*</label>
           <input
@@ -304,7 +289,7 @@ function Form() {
             checked={drivetrain.fwd === true}
             onChange={(e) => handleDrivetrain("fwd")}
           />
-          Front Wheel Drive
+          FWD
           <input
             type="checkbox"
             name="drivetrain"
@@ -312,7 +297,7 @@ function Form() {
             checked={drivetrain.rwd === true}
             onChange={(e) => handleDrivetrain("rwd")}
           />
-          Rear Wheel Drive
+          RWD
           <input
             type="checkbox"
             name="drivetrain"
@@ -320,9 +305,9 @@ function Form() {
             checked={drivetrain.awd === true}
             onChange={(e) => handleDrivetrain("awd")}
           />
-          All Wheel Drive
+          AWD
           {/* MPG INPUT */}
-          <label htmlFor="location">Fuel Economy (Optional)</label>
+          <label htmlFor="location">Minimum MPG (Optional)</label>
           <input
             type="text"
             name="minMPG"
