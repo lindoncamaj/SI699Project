@@ -1,16 +1,16 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 function Register() {
+  const navigate = useNavigate();
+
   const [user_name, setUsername] = useState("");
   const [user_pass, setPassword] = useState("");
   const [user_email, setEmail] = useState("");
   const [user_fname, setFName] = useState("");
   const [user_lname, setLName] = useState("");
-  // const registerData = location.state || {};
 
-  const navigate = useNavigate(); // Initialize navigation
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -31,14 +31,13 @@ function Register() {
     };
 
     // Pass form data to flask login function
-    axios.post("http://0.0.0.0:8080/register", data).then((response) => {
+    axios.post("http://127.0.0.1:8080/register", data).then((response) => {
       alert(response.data.message);
       navigate("/login");
-      //navigate("/register", {state: response.data});
     });
   };
+  // Reset all state variables here
   const handleReset = () => {
-    // Reset all state variables here
     setUsername("");
     setPassword("");
     setEmail("");
@@ -46,7 +45,7 @@ function Register() {
     setLName("");
   };
   return (
-    <div className="Form">
+    <div>
       <h1>Register</h1>
       <fieldset>
         <form action="#" method="get">
