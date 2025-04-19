@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { TextField, Button, Avatar, Typography, Box } from "@mui/material";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 export default function EditProfile() {
   const [profile, setProfile] = useState({
@@ -15,7 +15,7 @@ export default function EditProfile() {
 
   const fetchProfile = async () => {
     try {
-      const res = await axios.get("http://0.0.0.0:8080/edit-profile", { withCredentials: true });
+      const res = await axios.get("http://127.0.0.1:8080/edit-profile", { withCredentials: true });
       setProfile(res.data);
     } catch (error) {
       console.error("Failed to fetch profile", error);
@@ -29,7 +29,7 @@ export default function EditProfile() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post("http://0.0.0.0:8080/edit-profile", profile, { withCredentials: true });
+      await axios.post("http://127.0.0.1:8080/edit-profile", profile, { withCredentials: true });
       alert("Profile updated!");
       navigate("/");
     } catch (error) {
@@ -44,19 +44,16 @@ export default function EditProfile() {
 
 
   return (
-    <Box sx={{ maxWidth: 400, mx: "auto", mt: 5, p: 3, boxShadow: 3, borderRadius: 2 }}>
-      <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
-        <Avatar sx={{ width: 56, height: 56 }}>{profile.user_fname?.[0]}</Avatar>
-      </Box>
-      <Typography variant="h5" align="center" gutterBottom>Edit Profile</Typography>
+    <div>
+      <h1>Edit Profile Settings</h1>
       <form onSubmit={handleSubmit}>
-      <TextField fullWidth label="Username" name="user_name" value={profile.user_name} onChange={handleChange} margin="normal" />
-      <TextField fullWidth label="Password" type="password" name="user_pass" value={profile.user_pass || ""} onChange={handleChange} margin="normal" />
+        <TextField fullWidth label="Username" name="user_name" value={profile.user_name} onChange={handleChange} margin="normal" />
+        <TextField fullWidth label="Password" type="password" name="user_pass" value={profile.user_pass || ""} onChange={handleChange} margin="normal" />
         <TextField fullWidth label="First Name" name="user_fname" value={profile.user_fname} onChange={handleChange} margin="normal" />
         <TextField fullWidth label="Last Name" name="user_lname" value={profile.user_lname} onChange={handleChange} margin="normal" />
         <TextField fullWidth label="Email" name="user_email" value={profile.user_email} onChange={handleChange} margin="normal" />
         <Button fullWidth variant="contained" type="submit" sx={{ mt: 2 }}>Save Changes</Button>
       </form>
-    </Box>
+    </div>
   );
 }
