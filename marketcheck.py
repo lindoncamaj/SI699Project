@@ -21,7 +21,7 @@ api_key = "2fF3nUvfScNJ2V99N3KYDQmFzxhCApSc"
 
 
 def check(make, model, year, location):
-    url = f"https://mc-api.marketcheck.com/v2/search/car/active?api_key={api_key}&year={year}make={make}&model={model}&include_relevant_links=true"
+    url = f"https://mc-api.marketcheck.com/v2/search/car/active?api_key={api_key}&year={year}&make={make}&model={model}&radius=100&zip={location}&include_relevant_links=true"
 
     payload={}
     headers = {}
