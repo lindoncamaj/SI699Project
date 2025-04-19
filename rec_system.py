@@ -1,33 +1,40 @@
 import pymysql
 
-# form has min price, max price, body_type, make, drive_train
-# drive_train column has FWD,AWD,RWD
-# body_type has SUV, Sedan, etc
-
-# ev/gas/hybrid list
-# fuel economy int
-
-# car type T/F values for Sedan, SUV, Truck
-# same for ev/gas/hybrid
-# check for drivetrain later
-
-
-# helper function created to normalize values that will be used in recommendation sys
 def normalize(value, min_val, max_val, reverse=False):
-        if value is None or min_val == max_val:
-            return 0.5  # neutral score if no range
+    """
+    Function to normalize values that will be used in recommendation sys
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    """
+    if value is None or min_val == max_val:
+        return 0.5
+    else:
         norm = (value - min_val) / (max_val - min_val)
         return 1 - norm if reverse else norm
 
 
-def filtering(cur, min_price, max_price,
-              c_make_ids=None,
-              ev=False, gas=False, hybrid=False,
-              awd=False, fwd=False, rwd=False,
-              fuel_economy=0):
-    # specify which columns to return later
+
+
+
+
+
+
+def filtering(cur, min_price, max_price, c_year, c_make_ids=None, ev=False, gas=False, hybrid=False, awd=False, fwd=False, rwd=False, fuel_economy=0):
+    """
+    Function to get the car_id, year, make, model, and more from the database based on if the row matches the user's input
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    """
     query = """
-        SELECT 
+        SELECT
             Car.car_id,
             Car.car_year,
             Car_Make.make_name,
@@ -46,19 +53,15 @@ def filtering(cur, min_price, max_price,
         JOIN Car_Fuel_Type ON Car.fuel_type_id = Car_Fuel_Type.fuel_type_id
         WHERE car_min_price >= %s AND car_min_price <= %s
         AND car_comb_fuel_economy >= %s
+        AND car_year >= %s
         """
-    filters = [min_price, max_price, fuel_economy]
+    filters = [min_price, max_price, fuel_economy, c_year]
 
-    # add specific makes
     if c_make_ids:
-        # count the number of %s to add to query
         q_add = ', '.join(['%s'] * len(c_make_ids))
-        # add to current query
         query += f" AND Car.make_id IN ({q_add})"
-        # i am assuming c_type_ids is a list
         filters.extend(c_make_ids)
 
-    # add specific fuel types
     fuel_type_names = []
     if ev:
         fuel_type_names.append('Electric')
@@ -72,7 +75,7 @@ def filtering(cur, min_price, max_price,
         query += f" AND Car_Fuel_Type.fuel_type_name IN ({q_add})"
         filters.extend(fuel_type_names)
 
-    # add specific drive trains
+
     drivetrain_names = []
     if awd:
         drivetrain_names.append('AWD')
@@ -91,21 +94,28 @@ def filtering(cur, min_price, max_price,
 
     return results
 
-# sorting
-def recommend(matched,
-              query_id=None,
-              location=None,
-              weight_min_price=0.25, 
-              weight_med_price=0.25, 
-              weight_expert_score=0.25, 
-              weight_consumer_score=0.25):
-    
-    # normalize scores and prices for fair comparison
+
+
+
+
+
+
+
+def recs(matched, query_id=None, location=None, weight_min_price=0.25, weight_med_price=0.25, weight_expert_score=0.25, weight_consumer_score=0.25):
+    """
+    Function to sort matched cars and get the top 10 most relevant cars
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    """
     # first, extract all values to compute min/max for normalization
-    min_prices = [row[7] for row in matched if row[7] is not None]
-    med_prices = [row[8] for row in matched if row[8] is not None]
-    expert_scores = [row[9] for row in matched if row[9] is not None]
-    consumer_scores = [row[10] for row in matched if row[10] is not None]
+    min_prices = [row[6] for row in matched if row[6] is not None]
+    med_prices = [row[7] for row in matched if row[7] is not None]
+    expert_scores = [row[8] for row in matched if row[8] is not None]
+    consumer_scores = [row[9] for row in matched if row[9] is not None]
 
     # need to consider cases for all values are missing values
     min_price_min = min(min_prices) if min_prices else 0
@@ -120,48 +130,64 @@ def recommend(matched,
     # score each car
     scored = []
     for row in matched:
-        min_price = row[7]
-        med_price = row[8]
-        expert_score = row[9]
-        consumer_score = row[10]
+        min_price = row[6]
+        med_price = row[7]
+        expert_score = row[8]
+        consumer_score = row[9]
 
         score = (
-            weight_min_price * normalize(min_price, min_price_min, min_price_max, reverse=True) +
-            weight_med_price * normalize(med_price, med_price_min, med_price_max, reverse=True) +
-            weight_expert_score * normalize(expert_score, expert_score_min, expert_score_max) +
-            weight_consumer_score * normalize(consumer_score, consumer_score_min, consumer_score_max)
+            weight_min_price * float(normalize(min_price, min_price_min, min_price_max, reverse=True)) +
+            weight_med_price * float(normalize(med_price, med_price_min, med_price_max, reverse=True)) +
+            weight_expert_score * float(normalize(expert_score, expert_score_min, expert_score_max)) +
+            weight_consumer_score * float(normalize(consumer_score, consumer_score_min, consumer_score_max))
         )
-        # balance out null fields
-
         scored.append((score, row))
 
     # sort by score (descending order to prioritize higher value)
     scored.sort(key=lambda x: x[0], reverse=True)
 
-    # create output dict
     result = {}
-    # how many results do we want to show?
-    for i, (score, row) in enumerate(scored[:50]):
-        # figure out which info we need
-        result[f"item{i+1}"] = {
-            "query_id": query_id,
-            "zip": location,
-            "year": row[1],                     # car_year
-            "make": row[2].capitalize(),        # make_name
-            "model": row[3].capitalize(),       # model_name
-            "drivetrain": row[4],               # drivetrain_name
-            "image": row[5],                    # image_url
-            "min_price": float(row[6]) if row[6] is not None else None, # min_price in db
-            "med_price": float(row[7]) if row[7] is not None else None, # med_price in db
-            "expert_score": float(row[8]) if row[8] is not None else None, # expert_score in db
-            "consumer_score": float(row[9]) if row[9] is not None else None, # consumer_score in db
-        }
-    
+    chosen = []
+    for i, (score, row) in enumerate(scored):
+        if len(chosen) >= 12:
+            break
+
+        if [row[2], row[3], row[1]] not in chosen:
+            result[f"item{i+1}"] = {
+                "query_id": query_id,
+                "zip": location,
+                "year": row[1],                     # car_year
+                "make": row[2],        # make_name
+                "model": row[3],       # model_name
+                "drivetrain": row[4],               # drivetrain_name
+                "image": row[5],                    # image_url
+                "min_price": float(row[6]) if row[6] is not None else None, # min_price in db
+                "med_price": float(row[7]) if row[7] is not None else None, # med_price in db
+                "expert_score": float(row[8]) if row[8] is not None else None, # expert_score in db
+                "consumer_score": float(row[9]) if row[9] is not None else None, # consumer_score in db
+            }
+
+            chosen.append([row[2], row[3], row[1]])
+
     return result
 
-if __name__ == "__main__":
+
+
+
+
+
+def recommend(min_price, max_price, c_make_ids, c_year, ev, gas, hybrid, awd, fwd, rwd, fuel_economy, query_id, location):
+    """
+    Function to recommend cars
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    """
     connection = pymysql.connect(
-        host="database2.cyjek8guse5h.us-east-1.rds.amazonaws.com",
+        host="database-2.cyjek8guse5h.us-east-1.rds.amazonaws.com",
         user="admin",
         password="si699matchmycar",
         database="car_database",
@@ -169,25 +195,10 @@ if __name__ == "__main__":
     )
     cursor = connection.cursor()
 
-    # example usage
-    matched = filtering(cursor,
-                        min_price=20000,
-                        max_price=50000,
-                        c_make_ids=[1, 2, 3], # the list of make ids ex. Hyundai, Toyota, BMW
-                        ev=True,
-                        gas=True,
-                        hybrid=False,
-                        awd=True,
-                        fwd=True,
-                        rwd=False,
-                        fuel_economy=20)
-    
-    # sorted_recs should be a dictionary of dictionaries
-    # key: "itemX", where X is 1~50
-    # value: dictionary
-    sorted_recs = recommend(matched,
-                            query_id=1,
-                            location=48103)
+    matched = filtering(cursor, min_price, max_price, c_year, c_make_ids, ev, gas, hybrid, awd, fwd, rwd, fuel_economy)
+    sorted_recs = recs(matched, query_id, location)
 
     cursor.close()
     connection.close()
+
+    return sorted_recs
